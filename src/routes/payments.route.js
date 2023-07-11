@@ -9,9 +9,16 @@ router.post(
   PaymentController.generateQRController
 );
 
-router.get("/scan-qr/:hash", PaymentController.scanQRController);
+router.post("/initiate/payments", verify, PaymentController.initiatePayment);
 
-router.post("/initiate/:transaction_id", PaymentController.initiateTransaction);
-// router.post("/qr-payment", AuthenticationController.signUpController);
+router.get("/scan-qr/:hash", verify, PaymentController.scanQRController);
+
+router.post(
+  "/initiateQR/:transaction_id",
+  verify,
+  PaymentController.initiateTransaction
+);
+
+router.get("/callback", PaymentController.callbackController);
 
 module.exports = router;

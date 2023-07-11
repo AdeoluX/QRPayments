@@ -52,17 +52,17 @@ class AuthenticationService {
       "Phonenumber or Email already exists"
     );
     // account creation
-    const {
-      data: { account_number, bank_name, amount },
-    } = await providers["flutterwave"].accountCreation({
-      email,
-      bvn,
-      phonenumber,
-      first_name,
-      last_name,
-      narration: `account for ${first_name}`,
-      tx_ref,
-    });
+    // const {
+    //   data: { account_number, bank_name, amount },
+    // } = await providers["flutterwave"].accountCreation({
+    //   email,
+    //   bvn,
+    //   phonenumber,
+    //   first_name,
+    //   last_name,
+    //   narration: `account for ${first_name}`,
+    //   tx_ref,
+    // });
     const hash_password = await hash(password);
     const user = await UserRepo.create({
       email,
@@ -79,10 +79,10 @@ class AuthenticationService {
     });
 
     const account = await AccountRepo.create({
-      bank_code: "flutterwave",
-      nuban: account_number,
-      bank_name,
-      balance: isNaN(amount) ? 0 : amount,
+      bank_code: "virtual",
+      nuban: "",
+      bank_name: "QR-BANK",
+      balance: 0,
       user: user._id,
       _id: account_id,
       external_identifier: tx_ref,

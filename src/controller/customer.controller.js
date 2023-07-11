@@ -50,6 +50,14 @@ class CustomerController {
     });
     return successResponse(req, res, customer);
   });
+
+  static fundWallet = catchAsync(async (req, res, next) => {
+    const customer = await CustomerService.fundWallet({
+      auth: req.auth,
+      body: req.body,
+    });
+    return successResponse(req, res, customer);
+  });
 }
 
 module.exports = CustomerController;

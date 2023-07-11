@@ -24,6 +24,13 @@ class ModelRepo {
     return account;
   };
 
+  static updateAll = async (new_values, condition) => {
+    const account = await Model.updateMany(condition, new_values, {
+      new: true,
+    });
+    return account;
+  };
+
   static delete = async (condition) => {
     const account = await Model.deleteOne(condition);
     return account;

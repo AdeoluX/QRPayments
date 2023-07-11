@@ -19,11 +19,11 @@ const TransactionSchema = new Schema({
   },
   module: {
     type: String,
-    enum: ["QR", "TRSF"],
+    enum: ["QR", "TRSF", "CARD"],
   },
   status: {
     type: String,
-    enum: ["success", "failed", "pending", "processing"],
+    enum: ["success", "failed", "pending", "processing", "cancelled"],
   },
   qr_hash: String,
   currency: String,

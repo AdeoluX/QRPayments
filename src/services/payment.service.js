@@ -11,6 +11,7 @@ const {
   generate_random_password,
   unique_id,
   alpha_numeric_random,
+  generate_cscs_refcode,
 } = require("../utils/passwordHash");
 const { generateToken } = require("../utils/tokenManagement");
 const { ObjectId } = require("mongodb");
@@ -54,20 +55,52 @@ class PaymentService {
     // session.endSession();
   };
 
-  static scanQR = async (hash) => {
+  static scanQR = async (hash, auth) => {
+    const { user_id } = auth;
+    console.log(hash, auth);
     // find hash
-    const findHash = await TransactionRepo.find({
+    const findHash = await TransactionRepo.findAll({
       qr_hash: hash,
       status: "pending",
     });
-    abortIf(!findHash, httpStatus.BAD_REQUEST, "Invalid QR code.");
+    abortIf(
+      !findHash || findHash.length > 1,
+      httpStatus.BAD_REQUEST,
+      "Invalid QR code."
+    );
+    const transactionsMeta = {
+      payers_id: user_id,
+      ...(findHash.qr_hash && { type: "QR" }),
+    };
+    await TransactionRepo.update(
+      { meta: JSON.stringify(transactionsMeta) },
+      { qr_hash: hash, type: "CR" }
+    );
+    const newTransactionMeta = {
+      receiver_id: user_id,
+      ...(findHash.qr_hash && { type: "QR" }),
+    };
+    const newTransactionsLog = await TransactionRepo.create({
+      amount: findHash[0].amount,
+      description: findHash[0].description,
+      user: user_id,
+      module: findHash[0].module,
+      currency: findHash[0].currency,
+      type: "DR",
+      qr_hash: findHash[0].qr_hash,
+      status: "processing",
+      store: findHash[0].store,
+      reference: findHash[0].reference,
+      meta: JSON.stringify(newTransactionMeta),
+    });
+    console.log(findHash[0]);
     const {
       _id,
       amount,
       currency,
       description,
       user: { first_name, last_name },
-    } = findHash;
+    } = findHash[0];
     return {
       transaction_id: _id,
       amount,
@@ -77,16 +110,41 @@ class PaymentService {
     };
   };
 
-  static initiateTransaction = async ({ auth, transaction_id }) => {
+  static initiateTransaction = async ({ auth, qr_hash: transaction_id }) => {
     const { user_id } = auth;
     // find transactions
-    const { user: receiver_id } = await this.logTransactions(transaction_id);
+    const [transaction1, transaction2] = await TransactionRepo.findAll({
+      qr_hash: transaction_id,
+    });
+
+    let amount = transaction1.amount;
+    let reference = transaction1.reference;
+    let receiver_id;
+    if (transaction1.type === "CR") {
+      receiver_id = transaction1.user;
+    }
+    if (transaction2.type === "CR") {
+      receiver_id = transaction2.user;
+    }
     // intiate transfer between users
     // ==> Get Users Accounts
     const { payer_bank_id, receiver_bank_id } = await this.getAccountIds({
       receiver_id,
       payer_id: user_id,
     });
+    // decrease and increase accounts accordingly
+    await AccountRepo.update(
+      { $inc: { balance: amount } },
+      { _id: receiver_bank_id }
+    );
+    await AccountRepo.update(
+      { $inc: { balance: -amount } },
+      { _id: payer_bank_id }
+    );
+    await TransactionRepo.updateAll({ status: "success" }, { reference });
+    return {
+      message: "success",
+    };
   };
 
   static logTransactions = async (transaction_id) => {
@@ -129,18 +187,75 @@ class PaymentService {
       { _id: transaction_id }
     );
 
-    return { user };
+    return { user, amount, qr_hash, reference };
   };
 
   static getAccountIds = async ({ receiver_id, payer_id }) => {
-    const { external_identifier: receiver_bank_id } = await AccountRepo.find({
+    const { _id: receiver_bank_id } = await AccountRepo.find({
       user: receiver_id,
     });
-    const { external_identifier: payer_bank_id } = await AccountRepo.find({
+    const { _id: payer_bank_id } = await AccountRepo.find({
       user: payer_id,
     });
 
     return { receiver_bank_id, payer_bank_id };
+  };
+
+  static initiate = async ({
+    auth: { user_id, email },
+    payload: { amount, currency },
+    action,
+  }) => {
+    const tx_ref = `FUNWAL_${alpha_numeric_random(19)}`;
+    const transactionLog = await TransactionRepo.create({
+      amount,
+      description: action,
+      user: user_id,
+      module: "CARD",
+      currency,
+      type: "CR",
+      status: "processing",
+      reference: tx_ref,
+    });
+    const call = await providers["flutterwave"].initiate({
+      tx_ref,
+      amount,
+      redirect_url: "https://google.com",
+      currency,
+      email,
+      meta: {
+        action,
+        user_id,
+        reference: tx_ref,
+        currency,
+      },
+    });
+    return call.data;
+  };
+
+  static processCallback = async ({
+    query: { status: txn_status, tx_ref },
+  }) => {
+    const { user, amount, status } = await TransactionRepo.find({
+      reference: tx_ref,
+    });
+    if (["pending", "processing"].includes(status)) {
+      const updateTransaction = await TransactionRepo.update(
+        {
+          status: txn_status,
+        },
+        { reference: tx_ref }
+      );
+      const accountUpdate = await AccountRepo.update(
+        {
+          $inc: { balance: amount },
+        },
+        { user }
+      );
+    }
+
+    //TODO: => push notification, email,
+    return {};
   };
 }
 

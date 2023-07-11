@@ -8,11 +8,9 @@ const User = require("./Users");
 const AccountSchema = new Schema({
   bank_code: {
     type: String,
-    required: true,
   },
   nuban: {
     type: String,
-    required: true,
   },
   bank_name: String,
   balance: Number,

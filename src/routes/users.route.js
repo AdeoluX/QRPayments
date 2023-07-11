@@ -22,4 +22,6 @@ router.post(
   CustomerController.uploadStoreItem
 );
 
+router.post("/fund-wallet", verify, CustomerController.fundWallet);
+
 module.exports = router;

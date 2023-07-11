@@ -13,14 +13,30 @@ class PaymentController {
   });
 
   static scanQRController = catchAsync(async (req, res, next) => {
-    const customer = await PaymentService.scanQR(req.params.hash);
+    const customer = await PaymentService.scanQR(req.params.hash, req.auth);
     return successResponse(req, res, customer);
   });
 
   static initiateTransaction = catchAsync(async (req, res, next) => {
     const customer = await PaymentService.initiateTransaction({
       auth: req.auth,
-      reference: req.params.transaction_id,
+      qr_hash: req.params.transaction_id,
+    });
+    return successResponse(req, res, customer);
+  });
+
+  static initiatePayment = catchAsync(async (req, res, next) => {
+    const customer = await PaymentService.initiate({
+      auth: req.auth,
+      payload: req.body,
+      action: req.query.action,
+    });
+    return successResponse(req, res, customer);
+  });
+
+  static callbackController = catchAsync(async (req, res, next) => {
+    const customer = await PaymentService.processCallback({
+      query: req.query,
     });
     return successResponse(req, res, customer);
   });

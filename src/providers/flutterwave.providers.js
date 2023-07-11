@@ -43,6 +43,35 @@ class FlutterwaveService {
   static fundTransfer = async ({ email, password }) => {
     return {};
   };
+
+  static initiate = async ({
+    tx_ref,
+    amount,
+    redirect_url,
+    email,
+    meta,
+    currency,
+  }) => {
+    const payload = {
+      tx_ref,
+      amount,
+      redirect_url,
+      customer: {
+        email,
+      },
+      meta,
+      currency,
+      payment_options: "card",
+    };
+    const call = await Request.axiosPOST(
+      `${process.env.FLUTTERWAVE_BASEURL}/v3/payments`,
+      payload,
+      {
+        headers: { Authorization: `Bearer ${process.env.FLUTTERWAVE_TOKEN}` },
+      }
+    );
+    return call.data;
+  };
 }
 
 module.exports = FlutterwaveService;
