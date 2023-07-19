@@ -58,6 +58,11 @@ class CustomerController {
     });
     return successResponse(req, res, customer);
   });
+
+  static getTransactions = catchAsync(async(req, res, next) => {
+    const list = await CustomerService.getTransactions(req.auth);
+    return successResponse(req, res, list)
+  })
 }
 
 module.exports = CustomerController;

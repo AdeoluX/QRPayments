@@ -4,6 +4,7 @@ const providers = require("../providers");
 const StoreRepo = require("../database/dbServices/store.dbservice");
 const StoreItemRepo = require("../database/dbServices/storeItems.dbservice");
 const AccountRepo = require("../database/dbServices/account.dbservice")
+const TransRepo = require("../database/dbServices/transaction.dbservice")
 const {
   hash,
   compare_passwords,
@@ -63,7 +64,10 @@ class CustomerService {
    * Service to the getDetails Controller
    * @returns {object}
    */
-  static getTransactions = async ({ email, password }) => {};
+  static getTransactions = async ({ user_id }) => {
+    const list = await TransRepo.findAll({user: user_id})
+    return list
+  };
   /**
    * Service to the getDetails Controller
    * @returns {object}

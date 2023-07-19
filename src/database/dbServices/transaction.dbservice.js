@@ -12,8 +12,8 @@ class ModelRepo {
     return account;
   };
 
-  static findAll = async (condition) => {
-    const account = await Model.find(condition).populate("user").exec();
+  static findAll = async (condition, limit = 10) => {
+    const account = await Model.find(condition).limit(limit).populate("user").exec();
     return account;
   };
 

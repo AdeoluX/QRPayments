@@ -23,5 +23,6 @@ router.post(
 );
 
 router.post("/fund-wallet", verify, CustomerController.fundWallet);
+router.get("/transactions", verify, CustomerController.getTransactions)
 
 module.exports = router;
