@@ -21,4 +21,6 @@ router.post(
 
 router.get("/callback", PaymentController.callbackController);
 
+router.get("/redirectUrl", PaymentController.redirectUrlController)
+
 module.exports = router;

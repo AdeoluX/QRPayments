@@ -220,7 +220,7 @@ class PaymentService {
     const call = await providers["flutterwave"].initiate({
       tx_ref,
       amount,
-      redirect_url: "https://google.com",
+      redirect_url: "https://qrpayments-production.up.railway.app/api/v1/pay/redirectUrl",
       currency,
       email,
       meta: {

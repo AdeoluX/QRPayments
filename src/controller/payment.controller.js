@@ -1,7 +1,7 @@
 // const catchAsync = require('../utils/catchAsync');
 const catchAsync = require("../utils/catchAsync");
 const { PaymentService } = require("../services");
-const { successResponse } = require("../utils/responder");
+const { successResponse, redirect } = require("../utils/responder");
 
 class PaymentController {
   static generateQRController = catchAsync(async (req, res, next) => {
@@ -38,7 +38,11 @@ class PaymentController {
     const customer = await PaymentService.processCallback({
       query: req.query,
     });
-    return successResponse(req, res, customer);
+    return redirect(res, 'https://qrpayments-production.up.railway.app/api/v1/pay/redirect')
+  });
+
+  static redirectUrlController = catchAsync(async (req, res, next) => {
+    return successResponse(req, res, {success: true});
   });
 }
 
