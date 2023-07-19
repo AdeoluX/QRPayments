@@ -3,6 +3,7 @@ const { abortIf } = require("../utils/responder");
 const providers = require("../providers");
 const StoreRepo = require("../database/dbServices/store.dbservice");
 const StoreItemRepo = require("../database/dbServices/storeItems.dbservice");
+const AccountRepo = require("../database/dbServices/account.dbservice")
 const {
   hash,
   compare_passwords,
@@ -54,7 +55,10 @@ class CustomerService {
    * Service to the getDetails Controller
    * @returns {object}
    */
-  static getAccountDetails = async ({ email, password }) => {};
+  static getAccountDetails = async ({user_id}) => {
+    const accountDetails = await AccountRepo.find({user: user_id})
+    return accountDetails;
+  };
   /**
    * Service to the getDetails Controller
    * @returns {object}
