@@ -242,7 +242,7 @@ class PaymentService {
     if (["pending", "processing"].includes(status)) {
       const updateTransaction = await TransactionRepo.update(
         {
-          status: txn_status,
+          status: 'success',
         },
         { reference: tx_ref }
       );
