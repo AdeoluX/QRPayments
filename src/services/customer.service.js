@@ -65,7 +65,7 @@ class CustomerService {
    * @returns {object}
    */
   static getTransactions = async ({ user_id }) => {
-    const list = await TransRepo.findAll({user: user_id})
+    const list = await TransRepo.findAll({user: user_id, status: "success"})
     return list
   };
   /**
