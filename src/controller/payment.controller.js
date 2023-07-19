@@ -38,7 +38,7 @@ class PaymentController {
     const customer = await PaymentService.processCallback({
       query: req.query,
     });
-    return redirect(res, 'https://qrpayments-production.up.railway.app/api/v1/pay/redirect')
+    return redirect(res, 'https://qrpayments-production.up.railway.app/api/v1/pay/redirectUrl')
   });
 
   static redirectUrlController = catchAsync(async (req, res, next) => {
