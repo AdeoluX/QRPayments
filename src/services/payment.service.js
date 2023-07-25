@@ -70,7 +70,7 @@ class PaymentService {
       $or: [{ status: 'pending' }, { status: 'processing' }]
     });
     abortIf(
-      !findHash || (findHash.length > 1 && !specificHash),
+      findHash.length < 1 || (findHash.length > 1 && !specificHash),
       httpStatus.BAD_REQUEST,
       "Invalid QR code."
     );
