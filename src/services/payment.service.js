@@ -61,10 +61,16 @@ class PaymentService {
     // find hash
     const findHash = await TransactionRepo.findAll({
       qr_hash: hash,
-      status: "pending",
+      $or: [{ status: 'pending' }, { status: 'processing' }]
+    });
+    //
+    const specificHash = await TransactionRepo.find({
+      qr_hash: hash,
+      user: user_id,
+      $or: [{ status: 'pending' }, { status: 'processing' }]
     });
     abortIf(
-      !findHash || findHash.length > 1,
+      !findHash || (findHash.length > 1 && !specificHash),
       httpStatus.BAD_REQUEST,
       "Invalid QR code."
     );
@@ -88,7 +94,7 @@ class PaymentService {
       currency: findHash[0].currency,
       type: "DR",
       qr_hash: findHash[0].qr_hash,
-      status: "processing",
+      status: "pending",
       store: findHash[0].store,
       reference: findHash[0].reference,
       meta: JSON.stringify(newTransactionMeta),
