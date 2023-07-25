@@ -132,6 +132,9 @@ class PaymentService {
       receiver_id,
       payer_id: user_id,
     });
+    // get balance
+    const account = await AccountRepo.find({_id: payer_bank_id})
+    abortIf(amount > account.balance, httpStatus.BAD_REQUEST, 'Insufficient Funds')
     // decrease and increase accounts accordingly
     await AccountRepo.update(
       { $inc: { balance: amount } },
@@ -260,3 +263,5 @@ class PaymentService {
 }
 
 module.exports = PaymentService;
+
+
