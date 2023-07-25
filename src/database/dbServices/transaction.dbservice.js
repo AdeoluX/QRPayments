@@ -13,7 +13,7 @@ class ModelRepo {
   };
 
   static findAll = async (condition, limit = 10) => {
-    const account = await Model.find(condition).limit(limit).populate("user").exec();
+    const account = await Model.find(condition).sort({created_at: -1}).limit(limit).populate("user").exec();
     return account;
   };
 
