@@ -112,9 +112,11 @@ class PaymentService {
 
   static initiateTransaction = async ({ auth, qr_hash: transaction_id }) => {
     const { user_id } = auth;
+    // find transaction
+    const trxn = await TransactionRepo.find({_id: transaction_id})
     // find transactions
     const [transaction1, transaction2] = await TransactionRepo.findAll({
-      qr_hash: transaction_id,
+      qr_hash: trxn.qr_hash,
     });
 
     let amount = transaction1.amount;
