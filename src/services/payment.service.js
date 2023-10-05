@@ -5,7 +5,7 @@ const StoreRepo = require("../database/dbServices/store.dbservice");
 const StoreItemRepo = require("../database/dbServices/storeItems.dbservice");
 const TransactionRepo = require("../database/dbServices/transaction.dbservice");
 const AccountRepo = require("../database/dbServices/account.dbservice");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 const {
   hash,
   compare_passwords,
@@ -62,13 +62,13 @@ class PaymentService {
     // find hash
     const findHash = await TransactionRepo.findAll({
       qr_hash: hash,
-      $or: [{ status: 'pending' }, { status: 'processing' }]
+      $or: [{ status: "pending" }, { status: "processing" }],
     });
     //
     const specificHash = await TransactionRepo.find({
       qr_hash: hash,
       user: user_id,
-      $or: [{ status: 'pending' }, { status: 'processing' }]
+      $or: [{ status: "pending" }, { status: "processing" }],
     });
     abortIf(
       findHash.length < 1 || (findHash.length > 1 && !specificHash),
@@ -120,10 +120,10 @@ class PaymentService {
   static initiateTransaction = async ({ auth, qr_hash: transaction_id }) => {
     const session = mongoose.startSession();
     (await session).startTransaction();
-    try{
+    try {
       const { user_id } = auth;
       // find transaction
-      const trxn = await TransactionRepo.find({_id: transaction_id})
+      const trxn = await TransactionRepo.find({ _id: transaction_id });
       // find transactions
       const [transaction1, transaction2] = await TransactionRepo.findAll({
         qr_hash: trxn.qr_hash,
@@ -145,8 +145,12 @@ class PaymentService {
         payer_id: user_id,
       });
       // get balance
-      const account = await AccountRepo.find({_id: payer_bank_id})
-      abortIf(amount > account.balance, httpStatus.BAD_REQUEST, 'Insufficient Funds')
+      const account = await AccountRepo.find({ _id: payer_bank_id });
+      abortIf(
+        amount > account.balance,
+        httpStatus.BAD_REQUEST,
+        "Insufficient Funds"
+      );
       // decrease and increase accounts accordingly
       await AccountRepo.update(
         { $inc: { balance: amount } },
@@ -158,24 +162,27 @@ class PaymentService {
         { _id: payer_bank_id },
         session
       );
-      await TransactionRepo.updateAll({ status: "success" }, { reference }, session);
+      await TransactionRepo.updateAll(
+        { status: "success" },
+        { reference },
+        session
+      );
       (await session).commitTransaction();
       return {
         message: "success",
       };
-    }catch(error){
+    } catch (error) {
       (await session).abortTransaction();
-      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, 'Something went wrong!')
-    }finally{
-      (await session).endSession()
+      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
+    } finally {
+      (await session).endSession();
     }
-    
   };
 
   static logTransactions = async (transaction_id) => {
     const session = mongoose.startSession();
     (await session).startTransaction();
-    try{
+    try {
       const transactions = await TransactionRepo.find({ _id: transaction_id });
       abortIf(!transactions, httpStatus.BAD_REQUEST, "Invalid reference.");
       const transactionsMeta = {
@@ -196,19 +203,22 @@ class PaymentService {
         reference,
         user,
       } = transactions;
-      const newTransactionsLog = await TransactionRepo.create({
-        amount,
-        description,
-        user: user_id,
-        module,
-        currency,
-        type: "DR",
-        qr_hash,
-        status: "processing",
-        store,
-        reference,
-        meta: JSON.stringify(newTransactionMeta),
-      }, session);
+      const newTransactionsLog = await TransactionRepo.create(
+        {
+          amount,
+          description,
+          user: user_id,
+          module,
+          currency,
+          type: "DR",
+          qr_hash,
+          status: "processing",
+          store,
+          reference,
+          meta: JSON.stringify(newTransactionMeta),
+        },
+        session
+      );
       // update oldTransactions
       await TransactionRepo.update(
         { meta: JSON.stringify(transactionsMeta) },
@@ -217,11 +227,11 @@ class PaymentService {
       );
       (await session).commitTransaction();
       return { user, amount, qr_hash, reference };
-    }catch(error){
+    } catch (error) {
       (await session).abortTransaction();
-      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, 'Something went wrong!')
-    }finally{
-      (await session).endSession()
+      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
+    } finally {
+      (await session).endSession();
     }
   };
 
@@ -243,22 +253,26 @@ class PaymentService {
   }) => {
     const session = mongoose.startSession();
     (await session).startTransaction();
-    try{
+    try {
       const tx_ref = `FUNWAL_${alpha_numeric_random(19)}`;
-      const transactionLog = await TransactionRepo.create({
-        amount,
-        description: action,
-        user: user_id,
-        module: "CARD",
-        currency,
-        type: "CR",
-        status: "processing",
-        reference: tx_ref,
-      }, session);
+      const transactionLog = await TransactionRepo.create(
+        {
+          amount,
+          description: action,
+          user: user_id,
+          module: "CARD",
+          currency,
+          type: "CR",
+          status: "processing",
+          reference: tx_ref,
+        },
+        session
+      );
       const call = await providers["flutterwave"].initiate({
         tx_ref,
         amount,
-        redirect_url: "https://qrpayments-production.up.railway.app/api/v1/pay/callback",
+        redirect_url:
+          "https://qrpayments-production.up.railway.app/api/v1/pay/callback",
         currency,
         email,
         meta: {
@@ -270,11 +284,13 @@ class PaymentService {
       });
       (await session).commitTransaction();
       return call.data;
-    }catch(error){
-      (await session).abortTransaction();
-      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, 'Something went wrong!')
-    }finally{
-      (await session).endSession()
+    } catch (error) {
+      console
+        .log(error.message)(await session)
+        .abortTransaction();
+      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
+    } finally {
+      (await session).endSession();
     }
   };
 
@@ -283,14 +299,14 @@ class PaymentService {
   }) => {
     const session = mongoose.startSession();
     (await session).startTransaction();
-    try{
+    try {
       const { user, amount, status } = await TransactionRepo.find({
         reference: tx_ref,
       });
       if (["pending", "processing"].includes(status)) {
         const updateTransaction = await TransactionRepo.update(
           {
-            status: 'success',
+            status: "success",
           },
           { reference: tx_ref }
         );
@@ -302,15 +318,13 @@ class PaymentService {
         );
       }
       return {};
-    }catch(error){
+    } catch (error) {
       (await session).abortTransaction();
-      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, 'Something went wrong!')
-    }finally{
-      (await session).endSession()
+      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
+    } finally {
+      (await session).endSession();
     }
   };
 }
 
 module.exports = PaymentService;
-
-
