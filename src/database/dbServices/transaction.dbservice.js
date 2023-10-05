@@ -2,8 +2,8 @@
 const Model = require("../models/Transactions");
 
 class ModelRepo {
-  static create = async (data) => {
-    const account = await new Model(data).save();
+  static create = async (data, transaction = null) => {
+    const account = await new Model(data).save({...(transaction && {session: transaction})});
     return account;
   };
 
@@ -17,22 +17,24 @@ class ModelRepo {
     return account;
   };
 
-  static update = async (new_values, condition) => {
+  static update = async (new_values, condition, transaction = null) => {
     const account = await Model.findOneAndUpdate(condition, new_values, {
       new: true,
+      ...(transaction && {session: transaction})
     });
     return account;
   };
 
-  static updateAll = async (new_values, condition) => {
+  static updateAll = async (new_values, condition, transaction = null) => {
     const account = await Model.updateMany(condition, new_values, {
       new: true,
+      ...(transaction && {session: transaction})
     });
     return account;
   };
 
-  static delete = async (condition) => {
-    const account = await Model.deleteOne(condition);
+  static delete = async (condition, transaction = null) => {
+    const account = await Model.deleteOne(condition, {...(transaction && {session: transaction})});
     return account;
   };
 }

@@ -14,6 +14,7 @@ const {
   customerRoute,
   storeRoute,
   paymentRoute,
+  verificationRoute,
 } = require("./src/routes");
 
 const { errorConverter, errorHandler } = require("./src/middleware/error");
@@ -31,6 +32,7 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/customer", customerRoute);
 app.use("/api/v1/stores", storeRoute);
 app.use("/api/v1/pay", paymentRoute);
+app.use("/api/v1/verification", verificationRoute);
 
 app.use((req, res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, "Not found"));

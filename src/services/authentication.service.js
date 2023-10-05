@@ -27,25 +27,18 @@ class AuthenticationService {
       last_name,
       password,
       phonenumber,
-      bvn,
-      dob,
       confirm_password,
       user_type,
-      rc_number,
     } = data;
     // verify bvn
-    const bvnVerified = await providers["verifyme"].verifyBVN({ bvn, dob });
-    abortIf(!bvnVerified, httpStatus.BAD_REQUEST, "Invalid BVN");
+    // const bvnVerified = await providers["verifyme"].verifyBVN({ bvn, dob });
+    // abortIf(!bvnVerified, httpStatus.BAD_REQUEST, "Invalid BVN");
     abortIf(
       confirm_password !== password,
       httpStatus.BAD_REQUEST,
       "Passwords must match"
     );
-    const findUser = await UserRepo.findOr([
-      { email },
-      { phonenumber },
-      { bvn },
-    ]);
+    const findUser = await UserRepo.findOr([{ email }, { phonenumber }]);
     abortIf(
       findUser,
       httpStatus.BAD_REQUEST,
@@ -70,10 +63,7 @@ class AuthenticationService {
       last_name,
       password: hash_password,
       phonenumber,
-      bvn,
-      date_of_birth: new Date(dob),
       user_type,
-      rc_number,
       _id: user_id,
       account: account_id,
     });

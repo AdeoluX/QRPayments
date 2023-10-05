@@ -1,10 +1,8 @@
-const httpStatus = require("http-status");
-const { abortIf } = require("../utils/responder");
 const {
   Request: { axiosGET, axiosPOST },
-} = require("../utils/ApiCall");
+} = require("../../utils/ApiCall");
 
-class VerifyMeService {
+class VerificationService {
   static cacVerification = async () => {};
   static ninVerification = async () => {};
   static nubanVerification = async ({
@@ -36,7 +34,7 @@ class VerifyMeService {
       return { success: false };
     }
   };
-  static login = async () => {
+  static qoreIdLogin = async () => {
     try {
       const { data } = await axiosPOST(
         `${process.env.QORE_ID_BASE_URL}/token`,
@@ -787,5 +785,3 @@ class VerifyMeService {
     ];
   };
 }
-
-module.exports = VerifyMeService;
