@@ -306,8 +306,8 @@ class PaymentService {
   static processCallback = async ({
     query: { status: txn_status, tx_ref },
   }) => {
-    const session = mongoose.startSession();
-    (await session).startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const { user, amount, status } = await TransactionRepo.find({
         reference: tx_ref,
@@ -315,23 +315,26 @@ class PaymentService {
       if (["pending", "processing"].includes(status)) {
         const updateTransaction = await TransactionRepo.update(
           {
-            status: "success",
+            status: txn_status,
           },
-          { reference: tx_ref }
+          { reference: tx_ref },
+          session
         );
         const accountUpdate = await AccountRepo.update(
           {
             $inc: { balance: amount },
           },
-          { user }
+          { user },
+          session
         );
       }
+      await session.commitTransaction();
       return {};
     } catch (error) {
-      (await session).abortTransaction();
+      await session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
-      (await session).endSession();
+      session.endSession();
     }
   };
 }
