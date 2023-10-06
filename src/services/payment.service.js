@@ -111,7 +111,7 @@ class PaymentService {
         description,
         user: { first_name, last_name },
       } = findHash[0];
-      session.commitTransaction();
+      await session.commitTransaction();
       return {
         transaction_id: _id,
         amount,
@@ -120,7 +120,7 @@ class PaymentService {
         receipient: `${first_name} ${last_name}`,
       };
     } catch (error) {
-      session.abortTransaction();
+      await session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
       session.endSession();
@@ -177,12 +177,12 @@ class PaymentService {
         { reference },
         session
       );
-      session.commitTransaction();
+      await session.commitTransaction();
       return {
         message: "success",
       };
     } catch (error) {
-      session.abortTransaction();
+      await session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
       session.endSession();
@@ -235,10 +235,10 @@ class PaymentService {
         { _id: transaction_id },
         session
       );
-      session.commitTransaction();
+      await session.commitTransaction();
       return { user, amount, qr_hash, reference };
     } catch (error) {
-      session.abortTransaction();
+      await session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
       session.endSession();
@@ -292,11 +292,11 @@ class PaymentService {
           currency,
         },
       });
-      session.commitTransaction();
+      await session.commitTransaction();
       return call.data;
     } catch (error) {
       console.log(error.message);
-      session.abortTransaction();
+      await session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
       session.endSession();
