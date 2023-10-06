@@ -57,69 +57,79 @@ class PaymentService {
   };
 
   static scanQR = async (hash, auth) => {
-    const { user_id } = auth;
-    console.log(hash, auth);
-    // find hash
-    const findHash = await TransactionRepo.findAll({
-      qr_hash: hash,
-      $or: [{ status: "pending" }, { status: "processing" }],
-    });
-    //
-    const specificHash = await TransactionRepo.find({
-      qr_hash: hash,
-      user: user_id,
-      $or: [{ status: "pending" }, { status: "processing" }],
-    });
-    abortIf(
-      findHash.length < 1 || (findHash.length > 1 && !specificHash),
-      httpStatus.BAD_REQUEST,
-      "Invalid QR code."
-    );
-    const transactionsMeta = {
-      payers_id: user_id,
-      ...(findHash.qr_hash && { type: "QR" }),
-    };
-    await TransactionRepo.update(
-      { meta: JSON.stringify(transactionsMeta) },
-      { qr_hash: hash, type: "CR" }
-    );
-    const newTransactionMeta = {
-      receiver_id: user_id,
-      ...(findHash.qr_hash && { type: "QR" }),
-    };
-    const newTransactionsLog = await TransactionRepo.create({
-      amount: findHash[0].amount,
-      description: findHash[0].description,
-      user: user_id,
-      module: findHash[0].module,
-      currency: findHash[0].currency,
-      type: "DR",
-      qr_hash: findHash[0].qr_hash,
-      status: "pending",
-      store: findHash[0].store,
-      reference: findHash[0].reference,
-      meta: JSON.stringify(newTransactionMeta),
-    });
-    console.log(findHash[0]);
-    const {
-      _id,
-      amount,
-      currency,
-      description,
-      user: { first_name, last_name },
-    } = findHash[0];
-    return {
-      transaction_id: _id,
-      amount,
-      currency,
-      description,
-      receipient: `${first_name} ${last_name}`,
-    };
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { user_id } = auth;
+      console.log(hash, auth);
+      // find hash
+      const findHash = await TransactionRepo.findAll({
+        qr_hash: hash,
+        $or: [{ status: "pending" }, { status: "processing" }],
+      });
+      //
+      const specificHash = await TransactionRepo.find({
+        qr_hash: hash,
+        user: user_id,
+        $or: [{ status: "pending" }, { status: "processing" }],
+      });
+      abortIf(
+        findHash.length < 1 || (findHash.length > 1 && !specificHash),
+        httpStatus.BAD_REQUEST,
+        "Invalid QR code."
+      );
+      const transactionsMeta = {
+        payers_id: user_id,
+        ...(findHash.qr_hash && { type: "QR" }),
+      };
+      await TransactionRepo.update(
+        { meta: JSON.stringify(transactionsMeta) },
+        { qr_hash: hash, type: "CR" }
+      );
+      const newTransactionMeta = {
+        receiver_id: user_id,
+        ...(findHash.qr_hash && { type: "QR" }),
+      };
+      const newTransactionsLog = await TransactionRepo.create({
+        amount: findHash[0].amount,
+        description: findHash[0].description,
+        user: user_id,
+        module: findHash[0].module,
+        currency: findHash[0].currency,
+        type: "DR",
+        qr_hash: findHash[0].qr_hash,
+        status: "pending",
+        store: findHash[0].store,
+        reference: findHash[0].reference,
+        meta: JSON.stringify(newTransactionMeta),
+      });
+      console.log(findHash[0]);
+      const {
+        _id,
+        amount,
+        currency,
+        description,
+        user: { first_name, last_name },
+      } = findHash[0];
+      session.commitTransaction();
+      return {
+        transaction_id: _id,
+        amount,
+        currency,
+        description,
+        receipient: `${first_name} ${last_name}`,
+      };
+    } catch (error) {
+      session.abortTransaction();
+      abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
+    } finally {
+      session.endSession();
+    }
   };
 
   static initiateTransaction = async ({ auth, qr_hash: transaction_id }) => {
-    const session = mongoose.startSession();
-    (await session).startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const { user_id } = auth;
       // find transaction
@@ -167,21 +177,21 @@ class PaymentService {
         { reference },
         session
       );
-      (await session).commitTransaction();
+      session.commitTransaction();
       return {
         message: "success",
       };
     } catch (error) {
-      (await session).abortTransaction();
+      session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
-      (await session).endSession();
+      session.endSession();
     }
   };
 
   static logTransactions = async (transaction_id) => {
-    const session = mongoose.startSession();
-    (await session).startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const transactions = await TransactionRepo.find({ _id: transaction_id });
       abortIf(!transactions, httpStatus.BAD_REQUEST, "Invalid reference.");
@@ -225,13 +235,13 @@ class PaymentService {
         { _id: transaction_id },
         session
       );
-      (await session).commitTransaction();
+      session.commitTransaction();
       return { user, amount, qr_hash, reference };
     } catch (error) {
-      (await session).abortTransaction();
+      session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
-      (await session).endSession();
+      session.endSession();
     }
   };
 
@@ -251,8 +261,8 @@ class PaymentService {
     payload: { amount, currency },
     action,
   }) => {
-    const session = mongoose.startSession();
-    (await session).startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const tx_ref = `FUNWAL_${alpha_numeric_random(19)}`;
       const transactionLog = await TransactionRepo.create(
@@ -282,15 +292,14 @@ class PaymentService {
           currency,
         },
       });
-      (await session).commitTransaction();
+      session.commitTransaction();
       return call.data;
     } catch (error) {
-      console
-        .log(error.message)(await session)
-        .abortTransaction();
+      console.log(error.message);
+      session.abortTransaction();
       abortIf(error, httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong!");
     } finally {
-      (await session).endSession();
+      session.endSession();
     }
   };
 
