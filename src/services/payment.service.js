@@ -312,7 +312,7 @@ class PaymentService {
       const { user, amount, status } = await TransactionRepo.find({
         reference: tx_ref,
       });
-      if (status === "success" || status === "successful") {
+      if (txn_status === "success" || txn_status === "successful") {
         const updateTransaction = await TransactionRepo.update(
           {
             status: "success",
@@ -330,7 +330,7 @@ class PaymentService {
       } else {
         const updateTransaction = await TransactionRepo.update(
           {
-            status,
+            status: txn_status,
           },
           { reference: tx_ref },
           session
