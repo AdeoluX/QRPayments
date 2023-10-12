@@ -3,6 +3,7 @@ const customerRoute = require("./users.route");
 const storeRoute = require("./stores.route");
 const paymentRoute = require("./payments.route");
 const verificationRoute = require("./verification.route");
+const rssFeedRoute = require("./rssFeed.router")
 
 module.exports = {
   authRoute,
@@ -10,4 +11,5 @@ module.exports = {
   storeRoute,
   paymentRoute,
   verificationRoute,
+  rssFeedRoute
 };

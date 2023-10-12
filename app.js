@@ -15,6 +15,7 @@ const {
   storeRoute,
   paymentRoute,
   verificationRoute,
+  rssFeedRoute
 } = require("./src/routes");
 
 const { errorConverter, errorHandler } = require("./src/middleware/error");
@@ -33,6 +34,7 @@ app.use("/api/v1/customer", customerRoute);
 app.use("/api/v1/stores", storeRoute);
 app.use("/api/v1/pay", paymentRoute);
 app.use("/api/v1/verification", verificationRoute);
+app.use("/api/v1/rssFeed", rssFeedRoute)
 
 app.use((req, res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, "Not found"));
