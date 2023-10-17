@@ -2,6 +2,7 @@ const httpStatus = require("http-status");
 const { abortIf } = require("../utils/responder");
 const providers = require("../providers");
 const StoreRepo = require("../database/dbServices/store.dbservice");
+const UserRepo = require("../database/dbServices/user.dbservice")
 const StoreItemRepo = require("../database/dbServices/storeItems.dbservice");
 const AccountRepo = require("../database/dbServices/account.dbservice")
 const TransRepo = require("../database/dbServices/transaction.dbservice")
@@ -113,6 +114,25 @@ class CustomerService {
    * @returns {object}
    */
   static storeAnalytics = async ({ email, password }) => {};
+
+  static setTransferLimits = async ({ user_id, password, limit }) => {
+    const user = await UserRepo.find({_id: user_id})
+    abortIf(!user, httpStatus.BAD_REQUEST, 'User does not exist.');
+    const check = await compare_passwords(password, user.password);
+    abortIf(!check, httpStatus.BAD_REQUEST, "Invalid credentials.");
+    await UserRepo.update({transfer_limit: limit})
+    return {message: 'Updated successfully'}
+  };
+
+  static setTransactionPin = async ({ user_id, password, pin }) => {
+    const user = await UserRepo.find({_id: user_id})
+    abortIf(!user, httpStatus.BAD_REQUEST, 'User does not exist.');
+    const check = await compare_passwords(password, user.password);
+    abortIf(!check, httpStatus.BAD_REQUEST, "Invalid credentials.");
+    const hash_pin = await hash(pin);
+    await UserRepo.update({pin: hash_pin})
+    return {message: 'Updated successfully'}
+  };
 }
 
 module.exports = CustomerService;

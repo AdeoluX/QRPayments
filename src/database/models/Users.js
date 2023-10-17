@@ -31,6 +31,12 @@ const UserSchema = new Schema({
     type: String,
     enum: ["store_owner", "user"],
   },
+  pin: {
+    type: String,
+  },
+  transfer_limit: {
+    type: Number,
+  },
   bvn: String,
   account: { type: Schema.Types.ObjectId, ref: "Account" },
 });

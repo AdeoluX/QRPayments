@@ -25,4 +25,9 @@ router.post(
 router.post("/fund-wallet", verify, CustomerController.fundWallet);
 router.get("/transactions", verify, CustomerController.getTransactions)
 
+router.post("/set-pin", verify, CustomerController.setTransactionPin)
+
+router.post("/set-limit", verify, CustomerController.setTransferLimits)
+
+
 module.exports = router;

@@ -63,6 +63,18 @@ class CustomerController {
     const list = await CustomerService.getTransactions(req.auth);
     return successResponse(req, res, list)
   })
+
+  static setTransferLimits = catchAsync(async(req, res, next) => {
+    const {password, limit} = req.body
+    const list = await CustomerService.setTransferLimits({user_id: req.auth.user_id, password, limit });
+    return successResponse(req, res, list)
+  })
+
+  static setTransactionPin = catchAsync(async(req, res, next) => {
+    const {pin, password} = req.body
+    const list = await CustomerService.setTransactionPin({user_id: req.auth.user_id, pin, password});
+    return successResponse(req, res, list)
+  })
 }
 
 module.exports = CustomerController;
